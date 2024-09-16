@@ -5,7 +5,7 @@
   <script>
   import * as echarts from 'echarts';
   import axios from 'axios';
-
+  
   axios.defaults.baseURL = '/api';
   
   export default {
@@ -17,54 +17,75 @@
       this.initChart();
     },
     methods: {
-        async initChart() {
-            console.log('Initializing chart for:', this.chartType); // 确认组件初始化
-            try {
-                const response = await axios.get(`/api/data/${this.chartType}`);
-                console.log('Data received:', response.data); // 确认接收到的数据
-                const data = response.data;
-
-                // 检查是否成功获取了数据
-                if (!data.timestamps || !data.values) {
-                console.error('No data available for chart:', this.chartType);
-                return;
-                }
-
-                const option = {
-                title: {
-                    text: this.title
-                },
-                tooltip: {
-                    trigger: 'axis',
-                    formatter: (params) => {
-                    return `${params[0].axisValueLabel}<br />${params[0].seriesName}: ${params[0].value}`;
-                    }
-                },
-                xAxis: {
-                    type: 'category',
-                    data: data.timestamps
-                },
-                yAxis: {
-                    type: 'value'
-                },
-                series: [
-                    {
-                    name: this.title,
-                    type: 'line',
-                    data: data.values,
-                    smooth: true
-                    }
-                ]
-                };
-
-                const chartInstance = echarts.init(this.$refs.chart);
-                chartInstance.setOption(option);
-                console.log('Chart rendered successfully for:', this.chartType);
-            } catch (error) {
-                console.error('Error fetching data for chart:', error);
+      async initChart() {
+        let data, timestamps, seriesData;
+  
+        try {
+          if (this.chartType === 'delta' || this.chartType === 'indoor_co2' || this.chartType === 'outdoor_co2' || this.chartType === 'delta_co2') {
+            // 新增 delta-co2 数据请求处理
+            const response = await axios.get('/api/delta-co2');
+            data = response.data;
+  
+            if (this.chartType === 'indoor_co2') {
+              seriesData = data.indoor_co2;
+              timestamps = data.timestamps;
+            } else if (this.chartType === 'outdoor_co2') {
+              seriesData = data.outdoor_co2;
+              timestamps = data.timestamps;
+            } else if (this.chartType === 'delta_co2') {
+              seriesData = data.delta_co2;
+              timestamps = data.timestamps;
             }
+  
+          } else {
+            // 原有 /api/data/{chartType} 的请求
+            const response = await axios.get(`/api/data/${this.chartType}`);
+            data = response.data;
+  
+            // 检查是否成功获取了数据
+            if (!data.timestamps || !data.values) {
+              console.error('No data available for chart:', this.chartType);
+              return;
+            }
+  
+            timestamps = data.timestamps;
+            seriesData = data.values;
+          }
+  
+          // eCharts 配置
+          const option = {
+            title: {
+              text: this.title
+            },
+            tooltip: {
+              trigger: 'axis',
+              formatter: (params) => {
+                return `${params[0].axisValueLabel}<br />${params[0].seriesName}: ${params[0].value}`;
+              }
+            },
+            xAxis: {
+              type: 'category',
+              data: timestamps
+            },
+            yAxis: {
+              type: 'value'
+            },
+            series: [
+              {
+                name: this.title,
+                type: 'line',
+                data: seriesData,
+                smooth: true
+              }
+            ]
+          };
+  
+          const chartInstance = echarts.init(this.$refs.chart);
+          chartInstance.setOption(option);
+        } catch (error) {
+          console.error('Error fetching data for chart:', error);
         }
-
+      }
     }
   }
   </script>
