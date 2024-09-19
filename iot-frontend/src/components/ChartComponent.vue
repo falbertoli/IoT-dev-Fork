@@ -1,12 +1,12 @@
 <template>
-    <div ref="chart" style="width: 600px; height: 400px;"></div>
-  </template>
-  
+  <div class="chart-container">
+    <div ref="chart" class="chart"></div>
+  </div>
+</template>
+
   <script>
   import * as echarts from 'echarts';
   import axios from 'axios';
-  
-  axios.defaults.baseURL = '/api';
   
   export default {
     props: {
@@ -90,3 +90,19 @@
   }
   </script>
   
+
+
+
+<style scoped>
+  .chart-container {
+    display: grid;
+    place-items: center; /* 水平和垂直居中 */
+    width: 100%;
+    height: 100vh; /* 让容器占满整个视口高度 */
+  }
+  
+  .chart {
+    width: 600px;
+    height: 400px;
+  }
+  </style>
