@@ -67,78 +67,69 @@
   
       // Fetch data based on user selection
       // Fetch data based on user selection
-const fetchData = async () => {
+      const fetchData = async () => {
   let timestamps = null;
   const series = [];
 
-  // Loop through each selected data type (indoor, outdoor, delta)
-  for (const type of selectedDataTypes.value) {
-    let apiUrl = '';
-    if (type === 'delta') {
-      apiUrl = `/api/delta/${selectedLocation.value}/${selectedSensor.value}`; // delta-specific API
-    } else {
-      apiUrl = `/api/data/${selectedLocation.value}/${selectedSensor.value}/${type}`;
+  // 从统一的 delta API 获取所有数据
+  const apiUrl = `/api/delta/${selectedLocation.value}/${selectedSensor.value}`;
+
+  try {
+    const response = await axios.get(apiUrl);
+    const { timestamps: newTimestamps, indoor_value, outdoor_value, values: delta_values } = response.data;
+
+    // 确保 timestamps 是正确的
+    timestamps = newTimestamps;
+
+    // 根据用户选择显示对应的 series
+    if (selectedDataTypes.value.includes('indoor')) {
+      series.push({
+        name: `${selectedSensor.value} indoor`,
+        type: 'line',
+        data: indoor_value, // 使用后端返回的 indoor 数据
+        smooth: true,
+      });
     }
 
-    try {
-      const response = await axios.get(apiUrl);
-
-      // Handle delta case
-      if (type === 'delta') {
-        const { timestamps: newTimestamps, values } = response.data;
-        console.log("Delta Response:", response.data); // Debugging log
-
-        // Store the timestamps from the first response
-        if (!timestamps) {
-          timestamps = newTimestamps;
-        }
-
-        // Add the data series for delta
-        series.push({
-          name: `${selectedSensor.value} ${type}`,
-          type: 'line',
-          data: values, // Using 'values' for delta
-          smooth: true,
-        });
-      } else {
-        // Handle indoor/outdoor case
-        const { timestamps: newTimestamps, values } = response.data;
-
-        // Store the timestamps from the first response
-        if (!timestamps) {
-          timestamps = newTimestamps;
-        }
-
-        // Add the data series for indoor/outdoor
-        series.push({
-          name: `${selectedSensor.value} ${type}`,
-          type: 'line',
-          data: values, // Using 'values' for indoor/outdoor
-          smooth: true,
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
+    if (selectedDataTypes.value.includes('outdoor')) {
+      series.push({
+        name: `${selectedSensor.value} outdoor`,
+        type: 'line',
+        data: outdoor_value, // 使用后端返回的 outdoor 数据
+        smooth: true,
+      });
     }
+
+    if (selectedDataTypes.value.includes('delta')) {
+      series.push({
+        name: `${selectedSensor.value} delta`,
+        type: 'line',
+        data: delta_values, // 使用后端返回的 delta 数据
+        smooth: true,
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error);
   }
 
-  // Update the chart with the data from the backend
+  // 更新图表
   updateChart(timestamps, series);
 };
 
+
+
 // Update the chart with new data
 const updateChart = (timestamps, series) => {
-  // 清除之前的所有数据，确保不会有残留的 series
+  // 清除之前的所有数据
   chart.clear();
 
-  // 重新定义图表的 xAxis、yAxis，并确保 tooltip 存在以保持交互性
   const option = {
     tooltip: {
       trigger: 'axis', // 确保 tooltip 在悬停时显示数据
     },
     xAxis: {
       type: 'category',
-      data: timestamps, // 使用后端提供的统一时间戳
+      data: timestamps, // 使用统一的时间戳
     },
     yAxis: {
       type: 'value',
@@ -149,12 +140,12 @@ const updateChart = (timestamps, series) => {
       bottom: '3%',
       containLabel: true,
     },
-    series: series, // 传入更新后的 series
+    series: series, // 传入更新后的 series 数据
   };
 
-  // 重新设置图表的配置
   chart.setOption(option);
 };
+
 
   
       // Call initChart and fetch initial data when the component is mounted

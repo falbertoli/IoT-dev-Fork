@@ -125,6 +125,8 @@ def get_delta(location, sensor_type):
 
     return jsonify({
         'timestamps': merged_data['created_at'].dt.strftime('%Y-%m-%d %H:%M:%S').tolist(),
+        'indoor_value': merged_data['value_indoor'].tolist(),
+        'outdoor_value': merged_data['value_outdoor'].tolist(),
         'values': merged_data['delta'].tolist()
     })
 
