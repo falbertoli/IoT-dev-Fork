@@ -36,7 +36,8 @@
               seriesData = data.delta_co2;
               timestamps = data.timestamps;
             }
-  
+
+            
           } else {
             // 原有 /api/data/{chartType} 的请求
             const response = await axios.get(`/api/data/${this.chartType}`);
