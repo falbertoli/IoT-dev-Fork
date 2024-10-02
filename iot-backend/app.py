@@ -45,19 +45,15 @@ def compute_delta(location, field):
     indoor_data = fetch_data_from_thingspeak(indoor_channel_id, field)
     outdoor_data = fetch_data_from_thingspeak(outdoor_channel_id, field)
 
-    # find the common time range
     start_date = max(indoor_data['created_at'].min(), outdoor_data['created_at'].min())
     end_date = min(indoor_data['created_at'].max(), outdoor_data['created_at'].max())
 
-    # trim the data to the common time range
     indoor_data = indoor_data[(indoor_data['created_at'] >= start_date) & (indoor_data['created_at'] <= end_date)]
     outdoor_data = outdoor_data[(outdoor_data['created_at'] >= start_date) & (outdoor_data['created_at'] <= end_date)]
 
-    # resample the data to hourly frequency
     indoor_data_resampled = indoor_data.set_index('created_at').resample('1h').mean(numeric_only=True).interpolate().reset_index()
     outdoor_data_resampled = outdoor_data.set_index('created_at').resample('1h').mean(numeric_only=True).interpolate().reset_index()
 
-    # merge the data
     merged_data = pd.merge(indoor_data_resampled, outdoor_data_resampled, on='created_at', suffixes=('_indoor', '_outdoor'))
     merged_data['delta'] = merged_data['value_indoor'] - merged_data['value_outdoor']
 
@@ -73,7 +69,6 @@ def get_single_sensor_data(location, sensor_type, indoor_or_outdoor):
     if indoor_or_outdoor not in ['indoor', 'outdoor']:
         return jsonify({'error': 'Invalid sensor specifier, choose "indoor" or "outdoor"'}), 400
 
-    # Get the correct channel_id
     channel_info = locations[location].get(indoor_or_outdoor)
     if not channel_info:
         return jsonify({'error': f'{indoor_or_outdoor} sensor not found for {location}'}), 404
@@ -103,23 +98,18 @@ def get_delta(location, sensor_type):
 
     field = fields[sensor_type]
 
-    # Fetch indoor and outdoor data
     indoor_data = fetch_data_from_thingspeak(indoor_info['channel_id'], field)
     outdoor_data = fetch_data_from_thingspeak(outdoor_info['channel_id'], field)
 
-    # Find the common time range
     start_date = max(indoor_data['created_at'].min(), outdoor_data['created_at'].min())
     end_date = min(indoor_data['created_at'].max(), outdoor_data['created_at'].max())
 
-    # Trim the data to the common time range
     indoor_data = indoor_data[(indoor_data['created_at'] >= start_date) & (indoor_data['created_at'] <= end_date)]
     outdoor_data = outdoor_data[(outdoor_data['created_at'] >= start_date) & (outdoor_data['created_at'] <= end_date)]
 
-    # Resample the data to hourly frequency
     indoor_data_resampled = indoor_data.set_index('created_at').resample('1h').mean(numeric_only=True).interpolate().reset_index()
     outdoor_data_resampled = outdoor_data.set_index('created_at').resample('1h').mean(numeric_only=True).interpolate().reset_index()
 
-    # Merge the data
     merged_data = pd.merge(indoor_data_resampled, outdoor_data_resampled, on='created_at', suffixes=('_indoor', '_outdoor'))
     merged_data['delta'] = merged_data['value_indoor'] - merged_data['value_outdoor']
 

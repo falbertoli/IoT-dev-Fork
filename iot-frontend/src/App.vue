@@ -1,12 +1,19 @@
 <template>
   <div id="app">
-    <!-- <h1>Interactive CO2, Temperature, Humidity, Pressure Charts</h1> -->
+    <h1>Single data source charts (indoor)</h1>
     <!-- ChartComponent 组件保持不变 -->
-    <!-- <ChartComponent chartType="co2" title="CO2 Levels" />
-    <ChartComponent chartType="temperature" title="Temperature" />
-    <ChartComponent chartType="humidity" title="Humidity" />
-    <ChartComponent chartType="pressure" title="Pressure" /> -->
+     <div class="chart-container">
+      <ChartComponent chartType="co2" title="CO2 Levels" />
+      <ChartComponent chartType="temperature" title="Temperature" />
+      <ChartComponent chartType="humidity" title="Humidity" />
+      <ChartComponent chartType="pressure" title="Pressure" />
+      <ChartComponent chartType="delta_co2" title="Delta CO2 Levels" />
+      <ChartComponent chartType="delta_temperature" title="Delta Temperature" />
+      <ChartComponent chartType="delta_humidity" title="Delta Humidity" />
+      <ChartComponent chartType="delta_pressure" title="Delta Pressure" />
+    </div>
 
+      
     <!-- 这个 router-view 会动态加载 Delta 页面等 -->
     <!-- <router-view></router-view> -->
 
@@ -17,13 +24,14 @@
 </template>
 
 <script>
-// import ChartComponent from './components/ChartComponent.vue';
+import ChartComponent from './components/ChartComponent.vue';
 import SelectCharts from './components/SelectCharts.vue';
 
 export default {
   components: {
     // ChartComponent
-    SelectCharts
+    SelectCharts,
+    ChartComponent
   }
 }
 </script>
@@ -32,6 +40,8 @@ export default {
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   text-align: center;
-  margin-top: 40px;
+  /* margin-top: 40px; */
 }
+
+
 </style>
