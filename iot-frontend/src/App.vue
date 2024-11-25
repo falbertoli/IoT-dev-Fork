@@ -40,7 +40,17 @@ export default {
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   text-align: center;
-  /* margin-top: 40px; */
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  gap: 80px; /* 为每个图表组件设置20px的间距 */
+}
+
+.chart-container > * {
+  margin-bottom: 80px; /* 每个图表组件之间的底部间距 */
 }
 
 

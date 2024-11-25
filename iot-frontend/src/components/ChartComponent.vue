@@ -23,36 +23,36 @@ export default {
       let data, timestamps, seriesData;
       const location = this.location || 'location_1'; // Default location
       const sensorType = this.chartType.replace('delta_', ''); // Get sensor type without 'delta_'
-      
+
       try {
-        // 根据 chartType 判断使用哪种 API
+        // Determine which API to use based on chartType
         if (this.chartType.startsWith('delta_')) {
-          // 使用 /api/delta/<location>/<sensor_type> 路由
+          // Use /api/delta/<location>/<sensor_type> route
           const response = await axios.get(`/api/delta/${location}/${sensorType}`);
           data = response.data;
-          
-          // 根据类型，获取 delta 数据
-          seriesData = data.values; // 'values' 为 delta 数据
+
+          // Get delta data
+          seriesData = data.values; // 'values' contains delta data
           timestamps = data.timestamps;
-          
+
         } else {
-          // 使用 /api/data/<location>/<sensor_type>/<indoor_or_outdoor> 路由
+          // Use /api/data/<location>/<sensor_type>/<indoor_or_outdoor> route
           const indoorOrOutdoor = this.indoorOrOutdoor || 'indoor'; // Default to 'indoor'
           const response = await axios.get(`/api/data/${location}/${sensorType}/${indoorOrOutdoor}`);
           data = response.data;
 
-          // 获取对应的 indoor 或 outdoor 数据
+          // Get indoor or outdoor data
           seriesData = data.values;
           timestamps = data.timestamps;
         }
 
-        // 检查是否成功获取了数据
+        // Check if data was successfully retrieved
         if (!timestamps || !seriesData) {
           console.error('No data available for chart:', this.chartType);
           return;
         }
 
-        // eCharts 配置
+        // eCharts configuration
         const option = {
           title: {
             text: this.title
@@ -65,11 +65,24 @@ export default {
           },
           xAxis: {
             type: 'category',
-            data: timestamps
+            data: timestamps,
+            name: 'Time (UTC)',       // Add this line to indicate UTC time
+            nameLocation: 'center',
+            nameTextStyle: {
+              padding: 25            // Adjust padding to position the name properly
+            }
           },
           yAxis: {
             type: 'value'
           },
+          dataZoom: [                  // Add dataZoom component for zooming functionality
+            {
+              type: 'inside',          // Enables zooming with mouse wheel and touch gestures
+            },
+            {
+              type: 'slider',          // Adds a slider control to the chart
+            }
+          ],
           series: [
             {
               name: this.title,
@@ -80,7 +93,7 @@ export default {
           ]
         };
 
-        // 初始化或更新图表
+        // Initialize or update the chart
         const chartInstance = echarts.init(this.$refs.chart);
         chartInstance.setOption(option);
       } catch (error) {
@@ -100,7 +113,7 @@ export default {
     display: grid;
     place-items: center; /* 水平和垂直居中 */
     width: 100%;
-    height: 40vh; /* 让容器占满整个视口高度 */
+    height: 60vh; /* 让容器占满整个视口高度 */
   }
   
   .chart {
