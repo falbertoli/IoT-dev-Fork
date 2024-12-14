@@ -2,7 +2,7 @@
   <div class="container">
     <div class="selectors">
       <label for="location-select">Location:</label>
-      <select id="location-select" v-model="selectedLocation" @change="fetchData">
+      <select id="location-select" v-model="selectedLocation" @change="() => { updateSensorOptions(); fetchData(); }">
         <option v-for="location in locations" :key="location" :value="location">
           {{ location }}
         </option>
@@ -15,11 +15,33 @@
         </option>
       </select>
 
-      <label for="data-type-select">Data Type:</label>
-      <div v-for="type in dataTypes" :key="type">
-        <input type="checkbox" :id="type" :value="type" v-model="selectedDataTypes" @change="fetchData" />
-        <label :for="type">{{ type }}</label>
+      <label for="indoor-sensor-select">Indoor Sensor:</label>
+      <select id="indoor-sensor-select" v-model="selectedIndoorSensor" @change="fetchData">
+        <option value="None">None</option>
+        <option v-for="indoor in indoorSensorOptions" :key="indoor" :value="indoor">
+          {{ indoor }}
+        </option>
+      </select>
+
+      <label for="outdoor-sensor-select">Outdoor Sensor:</label>
+      <select id="outdoor-sensor-select" v-model="selectedOutdoorSensor" @change="fetchData">
+        <option value="None">None</option>
+        <option v-for="outdoor in outdoorSensorOptions" :key="outdoor" :value="outdoor">
+          {{ outdoor }}
+        </option>
+      </select>
+
+      <!-- Delta checkbox -->
+      <div>
+        <input type="checkbox" id="delta-checkbox" v-model="showDelta" @change="fetchData"/>
+        <label for="delta-checkbox">Show Delta</label>
       </div>
+
+      <!-- Range selection -->
+      <label for="range-select">Time Range (days):</label>
+      <select id="range-select" v-model="selectedRangeDays" @change="fetchData">
+        <option v-for="d in possibleRanges" :key="d" :value="d">{{ d }} days</option>
+      </select>
     </div>
 
     <div id="chart" style="width: 100%; height: 400px;"></div>
@@ -33,17 +55,52 @@ import axios from 'axios';
 
 export default {
   setup() {
-    // Reactive references for locations, sensors, data types, and user selections
-    const locations = ref(['location_1']);
-    const sensors = ref(['co2', 'humidity', 'temperature', 'pressure']); // Sensor types
-    const dataTypes = ref(['indoor', 'outdoor', 'delta']); // Data types
-    const selectedLocation = ref('location_1');
-    const selectedSensor = ref('co2'); // Initially select 'co2'
-    const selectedDataTypes = ref(['indoor']); // Multi-select for data types
+    // Available locations and their sensors
+    const locationSensorMap = {
+      'Kendeda': {
+        indoor: ['Arcalis'],
+        outdoor: ['Atlas']
+      },
+      'CNES': {
+        indoor: ['Antares', 'Arcalis', 'Alcyone', 'Asterope'],
+        outdoor: ['Atlas']
+      }
+    };
+
+    const locations = ref(['Kendeda', 'CNES']);
+    const sensors = ref(['co2', 'humidity', 'temperature', 'pressure']);
+
+    const indoorSensorOptions = ref([]);
+    const outdoorSensorOptions = ref([]);
+
+    const selectedLocation = ref('Kendeda');
+    const selectedSensor = ref('co2');
+
+    // Default to None for indoor/outdoor (no raw data shown)
+    const selectedIndoorSensor = ref('None');
+    const selectedOutdoorSensor = ref('None');
+
+    // Delta checkbox
+    const showDelta = ref(true); // default show delta
+
+    // Time range selection
+    const possibleRanges = ref([1, 3, 7, 14, 30]);
+    const selectedRangeDays = ref(7); // default 7 days
 
     let chart = null;
 
-    // Initialize the chart
+    const updateSensorOptions = () => {
+      const loc = selectedLocation.value;
+      indoorSensorOptions.value = locationSensorMap[loc].indoor || [];
+      outdoorSensorOptions.value = locationSensorMap[loc].outdoor || [];
+      if (!indoorSensorOptions.value.includes(selectedIndoorSensor.value) && selectedIndoorSensor.value !== 'None') {
+        selectedIndoorSensor.value = 'None';
+      }
+      if (!outdoorSensorOptions.value.includes(selectedOutdoorSensor.value) && selectedOutdoorSensor.value !== 'None') {
+        selectedOutdoorSensor.value = 'None';
+      }
+    };
+
     const initChart = () => {
       chart = echarts.init(document.getElementById('chart'));
       const option = {
@@ -56,10 +113,10 @@ export default {
         xAxis: {
           type: 'category',
           data: [],
-          name: 'Time (UTC)',       // Indicate UTC time
+          name: 'Time (UTC)',
           nameLocation: 'center',
           nameTextStyle: {
-            padding: [35, 0, 0, 0],  // Adjust padding to position the label properly
+            padding: [35, 0, 0, 0],
           },
         },
         yAxis: {
@@ -68,89 +125,140 @@ export default {
         grid: {
           left: '3%',
           right: '4%',
-          bottom: 80,               // Increase bottom margin to make space for labels and slider
+          bottom: 80,
           containLabel: true,
         },
-        dataZoom: [                  // Add dataZoom component for zooming functionality
+        dataZoom: [
           {
-            type: 'inside',          // Enables zooming with mouse wheel and touch gestures
+            type: 'inside',
           },
           {
-            type: 'slider',          // Adds a slider control to the chart
-            bottom: 40,              // Position the slider above the x-axis labels
+            type: 'slider',
+            bottom: 40,
           },
         ],
-        series: [], // Series will be populated based on user selection
+        series: [],
       };
       chart.setOption(option);
     };
 
-    // Fetch data based on user selection
     const fetchData = async () => {
       let timestamps = null;
       const series = [];
 
-      // Fetch all data from the unified delta API
-      const apiUrl = `/api/delta/${selectedLocation.value}/${selectedSensor.value}`;
+      const loc = selectedLocation.value;
+      const sensorType = selectedSensor.value;
+      const rangeStr = `${selectedRangeDays.value}d`;
 
-      try {
-        const response = await axios.get(apiUrl);
-        const { timestamps: newTimestamps, indoor_value, outdoor_value, values: delta_values } = response.data;
+      // If delta is shown, we call the delta endpoint:
+      if (showDelta.value) {
+        // For delta endpoint, we need indoor/outdoor sensor names
+        // If user chose None, fallback to a default sensor to fetch delta data
+        const defaultIndoor = indoorSensorOptions.value[0];
+        const defaultOutdoor = outdoorSensorOptions.value[0];
 
-        // Ensure timestamps are correct
-        timestamps = newTimestamps;
-
-        // Display corresponding series based on user selection
-        if (selectedDataTypes.value.includes('indoor')) {
-          series.push({
-            name: `${selectedSensor.value} indoor`,
-            type: 'line',
-            data: indoor_value, // Use indoor data returned from backend
-            smooth: true,
-          });
+        if (!defaultIndoor || !defaultOutdoor) {
+          console.error('No sensors available to compute delta for this location.');
+          return;
         }
 
-        if (selectedDataTypes.value.includes('outdoor')) {
+        const indoorParam = selectedIndoorSensor.value === 'None' ? defaultIndoor : selectedIndoorSensor.value;
+        const outdoorParam = selectedOutdoorSensor.value === 'None' ? defaultOutdoor : selectedOutdoorSensor.value;
+
+        const apiUrl = `/api/delta/${loc}/${sensorType}?indoor_sensor=${indoorParam}&outdoor_sensor=${outdoorParam}&range=${rangeStr}`;
+        try {
+          const response = await axios.get(apiUrl);
+          const { timestamps: newTimestamps, indoor_value, outdoor_value, values: delta_values } = response.data;
+          timestamps = newTimestamps;
+
+          // Show indoor line if user selected a sensor
+          if (selectedIndoorSensor.value !== 'None') {
+            series.push({
+              name: `${sensorType} indoor`,
+              type: 'line',
+              data: indoor_value,
+              smooth: true,
+            });
+          }
+
+          // Show outdoor line if user selected a sensor
+          if (selectedOutdoorSensor.value !== 'None') {
+            series.push({
+              name: `${sensorType} outdoor`,
+              type: 'line',
+              data: outdoor_value,
+              smooth: true,
+            });
+          }
+
+          // Always show delta line if delta is checked
           series.push({
-            name: `${selectedSensor.value} outdoor`,
+            name: `${sensorType} delta`,
             type: 'line',
-            data: outdoor_value, // Use outdoor data returned from backend
+            data: delta_values,
             smooth: true,
           });
+        } catch (error) {
+          console.error('Error fetching delta data:', error);
+        }
+      } else {
+        // Delta not shown, so we only show raw indoor/outdoor data if selected
+        // Call single sensor endpoints for each selected sensor
+        if (selectedIndoorSensor.value !== 'None') {
+          const indoorUrl = `/api/data/${loc}/${sensorType}/indoor/${selectedIndoorSensor.value}?range=${rangeStr}`;
+          try {
+            const response = await axios.get(indoorUrl);
+            const { timestamps: indoorTimestamps, values: indoorValues } = response.data;
+            if (!timestamps) {
+              timestamps = indoorTimestamps;
+            }
+            series.push({
+              name: `${sensorType} indoor`,
+              type: 'line',
+              data: indoorValues,
+              smooth: true,
+            });
+          } catch (error) {
+            console.error('Error fetching indoor data:', error);
+          }
         }
 
-        if (selectedDataTypes.value.includes('delta')) {
-          series.push({
-            name: `${selectedSensor.value} delta`,
-            type: 'line',
-            data: delta_values, // Use delta data returned from backend
-            smooth: true,
-          });
+        if (selectedOutdoorSensor.value !== 'None') {
+          const outdoorUrl = `/api/data/${loc}/${sensorType}/outdoor/${selectedOutdoorSensor.value}?range=${rangeStr}`;
+          try {
+            const response = await axios.get(outdoorUrl);
+            const { timestamps: outdoorTimestamps, values: outdoorValues } = response.data;
+            if (!timestamps) {
+              timestamps = outdoorTimestamps;
+            }
+            series.push({
+              name: `${sensorType} outdoor`,
+              type: 'line',
+              data: outdoorValues,
+              smooth: true,
+            });
+          } catch (error) {
+            console.error('Error fetching outdoor data:', error);
+          }
         }
-      } catch (error) {
-        console.error('Error fetching data:', error);
       }
 
-      // Update chart
       updateChart(timestamps, series);
     };
 
-    // Update the chart with new data
     const updateChart = (timestamps, series) => {
-      // Clear previous data
       chart.clear();
-
       const option = {
         tooltip: {
-          trigger: 'axis', // Ensure tooltip shows data on hover
+          trigger: 'axis',
         },
         xAxis: {
           type: 'category',
-          data: timestamps, // Use unified timestamps
-          name: 'Time (UTC)',       // Indicate UTC time
+          data: timestamps || [],
+          name: 'Time (UTC)',
           nameLocation: 'center',
           nameTextStyle: {
-            padding: [35, 0, 0, 0],  // Adjust padding to position the label properly
+            padding: [35, 0, 0, 0],
           },
         },
         yAxis: {
@@ -159,43 +267,49 @@ export default {
         grid: {
           left: '3%',
           right: '4%',
-          bottom: 80,               // Increase bottom margin to make space for labels and slider
+          bottom: 80,
           containLabel: true,
         },
-        dataZoom: [                  // Add dataZoom component for zooming functionality
+        dataZoom: [
           {
-            type: 'inside',          // Enables zooming with mouse wheel and touch gestures
+            type: 'inside',
           },
           {
-            type: 'slider',          // Adds a slider control to the chart
-            bottom: 40,              // Position the slider above the x-axis labels
+            type: 'slider',
+            bottom: 40,
           },
         ],
-        series: series, // Pass the updated series data
+        series: series,
       };
-
       chart.setOption(option);
     };
 
-    // Call initChart and fetch initial data when the component is mounted
     onMounted(() => {
+      updateSensorOptions();
       initChart();
-      fetchData(); // Fetch default data
+      fetchData();
     });
 
-    // Return the reactive references and methods
     return {
       locations,
       sensors,
-      dataTypes,
+      indoorSensorOptions,
+      outdoorSensorOptions,
       selectedLocation,
       selectedSensor,
-      selectedDataTypes,
-      fetchData,
+      selectedIndoorSensor,
+      selectedOutdoorSensor,
+      showDelta,
+      possibleRanges,
+      selectedRangeDays,
+      updateSensorOptions,
+      fetchData
     };
   },
 };
 </script>
+
+
 
   
   <style scoped>

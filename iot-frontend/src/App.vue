@@ -1,7 +1,6 @@
 <template>
   <div id="app">
-    <h1>Single data source charts (indoor)</h1>
-    <!-- ChartComponent 组件保持不变 -->
+    <!-- <h1>Single data source charts (indoor)</h1>
      <div class="chart-container">
       <ChartComponent chartType="co2" title="CO2 Levels" />
       <ChartComponent chartType="temperature" title="Temperature" />
@@ -11,7 +10,7 @@
       <ChartComponent chartType="delta_temperature" title="Delta Temperature" />
       <ChartComponent chartType="delta_humidity" title="Delta Humidity" />
       <ChartComponent chartType="delta_pressure" title="Delta Pressure" />
-    </div>
+    </div> -->
 
       
     <!-- 这个 router-view 会动态加载 Delta 页面等 -->
