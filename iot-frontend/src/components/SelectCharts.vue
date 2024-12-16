@@ -55,25 +55,16 @@ import axios from 'axios';
 
 export default {
   setup() {
-    // Available locations and their sensors
-    const locationSensorMap = {
-      'Kendeda': {
-        indoor: ['Arcalis'],
-        outdoor: ['Atlas']
-      },
-      'CNES': {
-        indoor: ['Antares', 'Arcalis', 'Alcyone', 'Asterope'],
-        outdoor: ['Atlas']
-      }
-    };
+    // We'll store the fetched locationSensorMap here:
+    const locationSensorMap = ref({});
 
-    const locations = ref(['Kendeda', 'CNES']);
+    const locations = ref([]);
     const sensors = ref(['co2', 'humidity', 'temperature', 'pressure']);
 
     const indoorSensorOptions = ref([]);
     const outdoorSensorOptions = ref([]);
 
-    const selectedLocation = ref('Kendeda');
+    const selectedLocation = ref(null);
     const selectedSensor = ref('co2');
 
     // Default to None for indoor/outdoor (no raw data shown)
@@ -90,9 +81,16 @@ export default {
     let chart = null;
 
     const updateSensorOptions = () => {
-      const loc = selectedLocation.value;
-      indoorSensorOptions.value = locationSensorMap[loc].indoor || [];
-      outdoorSensorOptions.value = locationSensorMap[loc].outdoor || [];
+      if (!selectedLocation.value || !locationSensorMap.value[selectedLocation.value]) {
+        indoorSensorOptions.value = [];
+        outdoorSensorOptions.value = [];
+        return;
+      }
+
+      indoorSensorOptions.value = locationSensorMap.value[selectedLocation.value].indoor || [];
+      outdoorSensorOptions.value = locationSensorMap.value[selectedLocation.value].outdoor || [];
+
+      // Reset selected sensors if they're no longer in the options
       if (!indoorSensorOptions.value.includes(selectedIndoorSensor.value) && selectedIndoorSensor.value !== 'None') {
         selectedIndoorSensor.value = 'None';
       }
@@ -143,6 +141,10 @@ export default {
     };
 
     const fetchData = async () => {
+      if (!selectedLocation.value) {
+        return;
+      }
+
       let timestamps = null;
       const series = [];
 
@@ -153,7 +155,6 @@ export default {
       // If delta is shown, we call the delta endpoint:
       if (showDelta.value) {
         // For delta endpoint, we need indoor/outdoor sensor names
-        // If user chose None, fallback to a default sensor to fetch delta data
         const defaultIndoor = indoorSensorOptions.value[0];
         const defaultOutdoor = outdoorSensorOptions.value[0];
 
@@ -191,7 +192,7 @@ export default {
             });
           }
 
-          // Always show delta line if delta is checked
+          // Always show delta line
           series.push({
             name: `${sensorType} delta`,
             type: 'line',
@@ -203,7 +204,6 @@ export default {
         }
       } else {
         // Delta not shown, so we only show raw indoor/outdoor data if selected
-        // Call single sensor endpoints for each selected sensor
         if (selectedIndoorSensor.value !== 'None') {
           const indoorUrl = `/api/data/${loc}/${sensorType}/indoor/${selectedIndoorSensor.value}?range=${rangeStr}`;
           try {
@@ -284,10 +284,26 @@ export default {
       chart.setOption(option);
     };
 
-    onMounted(() => {
-      updateSensorOptions();
-      initChart();
-      fetchData();
+    onMounted(async () => {
+      // Fetch the location configuration from the JSON file
+      try {
+        const response = await axios.get('/locations.json');
+        locationSensorMap.value = response.data;
+
+        // Populate the locations list
+        locations.value = Object.keys(locationSensorMap.value);
+
+        // Set a default selected location if not set
+        if (!selectedLocation.value) {
+          selectedLocation.value = locations.value[0];
+        }
+
+        updateSensorOptions();
+        initChart();
+        fetchData();
+      } catch (error) {
+        console.error('Error fetching location data:', error);
+      }
     });
 
     return {
@@ -309,18 +325,14 @@ export default {
 };
 </script>
 
-
-
-  
-  <style scoped>
-  .container {
-    padding: 20px;
-  }
-  .selectors {
-    margin-bottom: 20px;
-  }
-  select {
-    margin-right: 10px;
-  }
-  </style>
-  
+<style scoped>
+.container {
+  padding: 20px;
+}
+.selectors {
+  margin-bottom: 20px;
+}
+select {
+  margin-right: 10px;
+}
+</style>

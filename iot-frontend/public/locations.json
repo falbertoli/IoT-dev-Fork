@@ -1,0 +1,19 @@
+{
+    "Kendeda": {
+      "indoor": ["Arcalis"],
+      "outdoor": ["Atlas"],
+      "coordinates": {
+        "latitude": 33.776,
+        "longitude": -84.397
+      }
+    },
+    "CNES": {
+      "indoor": ["Antares", "Arcalis", "Alcyone", "Asterope"],
+      "outdoor": ["Atlas"],
+      "coordinates": {
+        "latitude": 44.128,
+        "longitude": 0.027
+      }
+    }
+}
+  
