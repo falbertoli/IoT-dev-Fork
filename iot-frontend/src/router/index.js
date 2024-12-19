@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import App from '../App.vue';
-import DeltaView from '../views/DeltaView.vue'; // 修改为 DeltaView
+import DeltaView from '../views/DeltaView.vue';
+import MapAndChartsView from '../views/MapAndChartsView.vue';
 
 const routes = [
   {
@@ -11,7 +12,12 @@ const routes = [
   {
     path: '/delta',
     name: 'DeltaView',
-    component: DeltaView  // 修改为 DeltaView
+    component: DeltaView
+  },
+  {
+    path: '/maps',
+    name: 'MapAndChartsView',
+    component: MapAndChartsView
   }
 ];
 

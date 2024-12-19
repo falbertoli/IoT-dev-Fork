@@ -3,16 +3,16 @@
       "indoor": ["Arcalis"],
       "outdoor": ["Atlas"],
       "coordinates": {
-        "latitude": 33.776,
-        "longitude": -84.397
+        "latitude": 33.77876,
+        "longitude": -84.39955
       }
     },
     "CNES": {
       "indoor": ["Antares", "Arcalis", "Alcyone", "Asterope"],
       "outdoor": ["Atlas"],
       "coordinates": {
-        "latitude": 44.128,
-        "longitude": 0.027
+        "latitude": 33.77113,
+        "longitude": -84.40177
       }
     }
 }

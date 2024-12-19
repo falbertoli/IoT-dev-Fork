@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <router-view></router-view>
     <!-- <h1>Single data source charts (indoor)</h1>
      <div class="chart-container">
       <ChartComponent chartType="co2" title="CO2 Levels" />
@@ -16,21 +17,21 @@
     <!-- 这个 router-view 会动态加载 Delta 页面等 -->
     <!-- <router-view></router-view> -->
 
-    <h1>Sensor Data Charts</h1>
+    <!-- <h1>Sensor Data Charts</h1> -->
     <!-- 使用 SelectCharts 组件 -->
     <SelectCharts />
   </div>
 </template>
 
 <script>
-import ChartComponent from './components/ChartComponent.vue';
+// import ChartComponent from './components/ChartComponent.vue';
 import SelectCharts from './components/SelectCharts.vue';
 
 export default {
   components: {
     // ChartComponent
     SelectCharts,
-    ChartComponent
+    // ChartComponent
   }
 }
 </script>

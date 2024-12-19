@@ -1,4 +1,5 @@
 <template>
+  <h1>Sensor Data Charts</h1>
   <div class="container">
     <div class="selectors">
       <label for="location-select">Location:</label>
@@ -54,7 +55,21 @@ import * as echarts from 'echarts';
 import axios from 'axios';
 
 export default {
-  setup() {
+  props: {
+    initialLocation: {
+      type: String,
+      default: 'Kendeda'
+    },
+    initialIndoorSensor: {
+      type: String,
+      default: 'None'
+    },
+    initialOutdoorSensor: {
+      type: String,
+      default: 'None'
+    }
+  },
+  setup(props) {
     // We'll store the fetched locationSensorMap here:
     const locationSensorMap = ref({});
 
@@ -64,12 +79,13 @@ export default {
     const indoorSensorOptions = ref([]);
     const outdoorSensorOptions = ref([]);
 
-    const selectedLocation = ref(null);
+    const selectedLocation = ref(props.initialLocation);
     const selectedSensor = ref('co2');
 
     // Default to None for indoor/outdoor (no raw data shown)
-    const selectedIndoorSensor = ref('None');
-    const selectedOutdoorSensor = ref('None');
+    const selectedIndoorSensor = ref(props.initialIndoorSensor);
+    const selectedOutdoorSensor = ref(props.initialOutdoorSensor);
+
 
     // Delta checkbox
     const showDelta = ref(true); // default show delta
@@ -306,6 +322,14 @@ export default {
       }
     });
 
+    const updateSensorsFromParent = (location, indoor, outdoor) => {
+      selectedLocation.value = location;
+      selectedIndoorSensor.value = indoor;
+      selectedOutdoorSensor.value = outdoor;
+      updateSensorOptions();
+      fetchData();
+    };
+
     return {
       locations,
       sensors,
@@ -319,7 +343,8 @@ export default {
       possibleRanges,
       selectedRangeDays,
       updateSensorOptions,
-      fetchData
+      fetchData,
+      updateSensorsFromParent
     };
   },
 };
