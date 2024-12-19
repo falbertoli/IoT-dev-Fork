@@ -44,7 +44,6 @@ def fetch_data_from_thingspeak(channel_id, field):
     feeds = data['feeds']
 
     df = pd.DataFrame(feeds)
-    # 这里指定utc=True，使created_at为UTC时区的tz-aware时间
     df['created_at'] = pd.to_datetime(df['created_at'], utc=True)
     df['value'] = pd.to_numeric(df[f'field{field}'], errors='coerce')
     df = df.dropna()
@@ -52,19 +51,18 @@ def fetch_data_from_thingspeak(channel_id, field):
     return df
 
 def parse_date_range(range_str):
-    now = datetime.now(timezone.utc)  # 使用UTC时间
-    if range_str.endswith('d'):  # 日
+    now = datetime.now(timezone.utc)  # use UTC time for simplicity
+    if range_str.endswith('d'):
         days = int(range_str[:-1])
         start_date = now - timedelta(days=days)
-    elif range_str.endswith('m'):  # 月（简单用30天代替一月）
+    elif range_str.endswith('m'):
         months = int(range_str[:-1])
         start_date = now - timedelta(days=30 * months)
-    elif range_str.endswith('y'):  # 年
+    elif range_str.endswith('y'):
         years = int(range_str[:-1])
-        # 使用replace为简单起见，这里假设当前日期减去整年数
         start_date = now.replace(year=now.year - years)
     else:
-        # 默认7天
+        # default to 7 days
         start_date = now - timedelta(days=7)
     end_date = now
     return start_date, end_date
@@ -113,11 +111,9 @@ def get_single_sensor_data(location, sensor_type, indoor_or_outdoor, sensor_name
     field = fields[sensor_type]
     data = fetch_data_from_thingspeak(channel_id, field)
 
-    # 解析range参数
     date_range = request.args.get('range', '7d')
     start_date, end_date = parse_date_range(date_range)
 
-    # 因为data['created_at']为tz-aware且为UTC，而start_date/end_date也是UTC，因此可以直接比较
     data = data[(data['created_at'] >= start_date) & (data['created_at'] <= end_date)]
 
     return jsonify({
@@ -145,7 +141,6 @@ def get_delta(location, sensor_type):
     except ValueError as e:
         return jsonify({'error': str(e)}), 404
 
-    # 时间范围过滤
     date_range = request.args.get('range', '7d')
     start_date, end_date = parse_date_range(date_range)
 
