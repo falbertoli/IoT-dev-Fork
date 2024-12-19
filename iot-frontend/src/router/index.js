@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import App from '../App.vue';
+import HomeView from '../views/HomeView.vue'; // 替代 App.vue 的首页组件
 import DeltaView from '../views/DeltaView.vue';
 import MapAndChartsView from '../views/MapAndChartsView.vue';
 
@@ -7,7 +7,7 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    component: App
+    component: HomeView
   },
   {
     path: '/delta',
