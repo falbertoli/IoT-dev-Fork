@@ -53,6 +53,7 @@
 import { ref, onMounted } from 'vue';
 import * as echarts from 'echarts';
 import axios from 'axios';
+import apiClient from '@/services/api.js';
 
 export default {
   props: {
@@ -91,7 +92,7 @@ export default {
     const showDelta = ref(true); // default show delta
 
     // Time range selection
-    const possibleRanges = ref([1, 3, 7, 14, 30]);
+    const possibleRanges = ref([1, 3, 7, 14, 30, 60]);
     const selectedRangeDays = ref(7); // default 7 days
 
     let chart = null;
@@ -184,7 +185,7 @@ export default {
 
         const apiUrl = `/api/delta/${loc}/${sensorType}?indoor_sensor=${indoorParam}&outdoor_sensor=${outdoorParam}&range=${rangeStr}`;
         try {
-          const response = await axios.get(apiUrl);
+          const response = await apiClient.get(apiUrl);
           const { timestamps: newTimestamps, indoor_value, outdoor_value, values: delta_values } = response.data;
           timestamps = newTimestamps;
 
@@ -223,7 +224,7 @@ export default {
         if (selectedIndoorSensor.value !== 'None') {
           const indoorUrl = `/api/data/${loc}/${sensorType}/indoor/${selectedIndoorSensor.value}?range=${rangeStr}`;
           try {
-            const response = await axios.get(indoorUrl);
+            const response = await apiClient.get(indoorUrl);
             const { timestamps: indoorTimestamps, values: indoorValues } = response.data;
             if (!timestamps) {
               timestamps = indoorTimestamps;
@@ -242,7 +243,7 @@ export default {
         if (selectedOutdoorSensor.value !== 'None') {
           const outdoorUrl = `/api/data/${loc}/${sensorType}/outdoor/${selectedOutdoorSensor.value}?range=${rangeStr}`;
           try {
-            const response = await axios.get(outdoorUrl);
+            const response = await apiClient.get(outdoorUrl);
             const { timestamps: outdoorTimestamps, values: outdoorValues } = response.data;
             if (!timestamps) {
               timestamps = outdoorTimestamps;
