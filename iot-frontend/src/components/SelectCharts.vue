@@ -107,12 +107,20 @@ export default {
       indoorSensorOptions.value = locationSensorMap.value[selectedLocation.value].indoor || [];
       outdoorSensorOptions.value = locationSensorMap.value[selectedLocation.value].outdoor || [];
 
-      // Reset selected sensors if they're no longer in the options
-      if (!indoorSensorOptions.value.includes(selectedIndoorSensor.value) && selectedIndoorSensor.value !== 'None') {
-        selectedIndoorSensor.value = 'None';
-      }
-      if (!outdoorSensorOptions.value.includes(selectedOutdoorSensor.value) && selectedOutdoorSensor.value !== 'None') {
-        selectedOutdoorSensor.value = 'None';
+      // Special case for "East Point"
+      if (selectedLocation.value === 'East Point') {
+        selectedIndoorSensor.value = indoorSensorOptions.value[0] || 'None';
+        selectedOutdoorSensor.value = outdoorSensorOptions.value[0] || 'None';
+        showDelta.value = false; // Disable delta for "East Point"
+      } else {
+        // Reset default behavior for other locations
+        if (!indoorSensorOptions.value.includes(selectedIndoorSensor.value) && selectedIndoorSensor.value !== 'None') {
+          selectedIndoorSensor.value = 'None';
+        }
+        if (!outdoorSensorOptions.value.includes(selectedOutdoorSensor.value) && selectedOutdoorSensor.value !== 'None') {
+          selectedOutdoorSensor.value = 'None';
+        }
+        showDelta.value = true; // Enable delta for other locations by default
       }
     };
 

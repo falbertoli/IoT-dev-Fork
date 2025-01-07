@@ -14,6 +14,14 @@
         "latitude": 33.77113,
         "longitude": -84.40177
       }
+    },
+    "East Point": {
+      "indoor": ["Asterope"],
+      "outdoor": ["Atlas"],
+      "coordinates": {
+        "latitude": 33.66784,
+        "longitude": -84.47652
+      }
     }
 }
   

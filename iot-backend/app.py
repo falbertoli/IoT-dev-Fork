@@ -27,6 +27,14 @@ locations = {
             'Atlas': 2099116
         }
     },
+    'East Point': {
+        'indoor': {
+            'Asterope': 2099111
+        },
+        'outdoor': {
+            'Atlas': 2099116
+        }
+    },
 }
 
 fields = {
