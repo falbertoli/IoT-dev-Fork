@@ -49,7 +49,7 @@ import L from 'leaflet';
 import axios from 'axios';
 import 'leaflet/dist/leaflet.css';
 import SelectCharts from '../components/SelectCharts.vue';
-import 'leaflet.markercluster'; // added on 02/11/2025 feature/add_marker_clustering
+import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
@@ -83,7 +83,6 @@ export default {
         attribution: 'Map data © OpenStreetMap contributors'
       }).addTo(map);
 
-      // Define the custom icon **before** using it
       const customIcon = L.icon({
         iconUrl: require('@/assets/location_1024px.png'), // Ensure this file exists
         iconSize: [24, 24],
