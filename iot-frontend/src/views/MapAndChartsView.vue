@@ -185,7 +185,7 @@ export default {
 
 .map-container {
   width: 100%;
-  height: 300px;
+  height: 100%;
   border-radius: 0px;
   border: 1px solid black;
   overflow: hidden;
