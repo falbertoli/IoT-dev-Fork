@@ -34,7 +34,7 @@
 
       <!-- Delta checkbox -->
       <div>
-        <input type="checkbox" id="delta-checkbox" v-model="showDelta" @change="fetchData"/>
+        <input type="checkbox" id="delta-checkbox" v-model="showDelta" @change="fetchData" />
         <label for="delta-checkbox">Show Delta</label>
       </div>
 
@@ -363,9 +363,11 @@ export default {
 .container {
   padding: 20px;
 }
+
 .selectors {
   margin-bottom: 20px;
 }
+
 select {
   margin-right: 10px;
 }
