@@ -99,8 +99,8 @@ def compute_delta(location, field, indoor_sensor_name, outdoor_sensor_name):
     outdoor_data = outdoor_data[(outdoor_data['created_at'] >= start_date) & (outdoor_data['created_at'] <= end_date)]
 
     # Resample to 10-minute intervals
-    indoor_data_resampled = indoor_data.set_index('created_at').resample('10T').mean(numeric_only=True)
-    outdoor_data_resampled = outdoor_data.set_index('created_at').resample('10T').mean(numeric_only=True)
+    indoor_data_resampled = indoor_data.set_index('created_at').resample('10min').mean(numeric_only=True)
+    outdoor_data_resampled = outdoor_data.set_index('created_at').resample('10min').mean(numeric_only=True)
 
     # Detect gaps (periods with NaN values before interpolation)
     indoor_gaps = indoor_data_resampled['value'].isna().sum()
